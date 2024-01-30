@@ -1,0 +1,71 @@
+version: "3.8"
+
+services:
+  nginx:
+    container_name: nginx
+    build: ./requirements/nginx
+    image: nginx:inception42
+    depends_on:
+      - wordpress
+    ports:
+      - "443:443"
+    volumes:
+      - wordpress_data:/var/www/html
+    restart: unless-stopped
+    networks:
+      - inception_network
+
+  mariadb:
+    container_name: mariadb
+    build: ./requirements/mariadb
+    image: mariadb:inception42
+    environment:
+      - DB_NAME=$DB_NAME
+      - DB_USER=$DB_USER
+      - DB_PASSWORD=$DB_PASSWORD
+      - DB_ROOT_PASSWORD=$DB_ROOT_PASSWORD
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    restart: unless-stopped
+    networks:
+      - inception_network
+
+  wordpress:
+    container_name: wordpress
+    build: ./requirements/wordpress
+    image: wordpress:inception42
+    depends_on:
+      - mariadb
+    environment:
+      - DB_NAME=$DB_NAME
+      - DB_USER=$DB_USER
+      - DB_PASSWORD=$DB_PASSWORD
+      - DB_HOST=$DB_HOST
+      - WEBSITE_URL=$WEBSITE_URL
+      - WEBSITE_MAIN_LOGIN=$WEBSITE_MAIN_LOGIN
+      - WEBSITE_MAIN_PASSWORD=$WEBSITE_MAIN_PASSWORD
+      - WEBSITE_MAIN_EMAIL=$WEBSITE_MAIN_EMAIL
+      - WEBSITE_USER_EMAIL=$WEBSITE_USER_EMAIL
+    volumes:
+      - wordpress_data:/var/www/html
+    restart: unless-stopped
+    networks:
+      - inception_network
+
+volumes:
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/asokolov/data/wordpress
+
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/asokolov/data/mariadb
+
+networks:
+  inception_network:
